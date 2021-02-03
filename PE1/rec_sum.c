@@ -1,5 +1,10 @@
 #include <stdio.h>
 
+/**
+* Group 35 - TDT4186
+* Matias, Martin og Lars
+*/
+
 static char ui_data;
 int counter = 0;
 
