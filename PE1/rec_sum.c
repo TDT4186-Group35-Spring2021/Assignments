@@ -76,6 +76,8 @@ int main(void)
  * in some cases we also see what is known as "alignment". The compiler prefers addresses which are divisible by the
  * length of the data type. So an int is placed on addresses ending with 0x00, 0x04, 0x08 or 0x0c, as these are divisible 
  * by 4, the number of bytes in an int.
+ * We suspect the type clustering happens because its more optimal than allocating space according to the defention 
+ * sequence in the program.
  * We used gcc as our compiler for testing.
  * 
  * c) 
