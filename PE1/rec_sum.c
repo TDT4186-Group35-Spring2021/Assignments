@@ -78,6 +78,7 @@ int main(void)
  * by 4, the number of bytes in an int.
  * We suspect the type clustering happens because its more optimal to cluster according to type than to follow the order in
  * which variables are declared.
+ * It's important to note that this might differ between compilers.
  * We used gcc as our compiler for testing.
  * 
  * c) 
