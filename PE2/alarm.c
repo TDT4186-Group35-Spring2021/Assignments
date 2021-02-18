@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <errno.h>
+
+extern int errno ;
 
 void soundAlarm(){
     printf("\a");
@@ -10,7 +13,11 @@ void soundAlarm(){
 /*2.2 Function to handle multiple alarms*/
 void timerFunc(int n){
     int id = fork();
-    if(id == 0){
+    if (id == -1){
+        perror("An error occured when forking the process\n");
+        printf( "Value of errno: %d\n", errno );
+    }
+    else if(id == 0){
         sleep(n);
         soundAlarm();
         printf("\nTime is up in process %d \n", getpid());
@@ -25,6 +32,10 @@ void killLoop(int options){
     int kill;
             do {
                 kill = waitpid(-1, NULL, options);
+                if (kill == -1){
+                    perror("An error occured when waiting for child process\n");
+                    printf( "Value of errno: %d\n", errno );
+                }
             }while (kill > 0);
 }
 
@@ -34,6 +45,7 @@ int main() {
     
     int timer;
     
+    // getpid() is always successful, so no need to handle errors
     printf("PID of main process %d\n", getpid());
     
     while (1) {
