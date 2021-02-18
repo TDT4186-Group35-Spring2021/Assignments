@@ -46,7 +46,7 @@ int main() {
         if (timer < 0) {
             killLoop(0);
             break;
-        
+        }
         
         timerFunc(timer);
         printf("PID of current process %d\n", getpid());
