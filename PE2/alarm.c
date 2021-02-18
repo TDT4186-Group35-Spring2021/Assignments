@@ -7,7 +7,7 @@ void soundAlarm(){
     printf("\a");
 }
 
-// 2.2 Function to handle multiple alarms
+/*2.2 Function to handle multiple alarms*/
 void timerFunc(int n){
     int id = fork();
     if(id == 0){
@@ -19,7 +19,8 @@ void timerFunc(int n){
     }
 }
 
-// 2.3 Kill loop to handle the zombies
+/*2.3 Kill loop to handle the zombies*/
+/*options will be set to WNOHANG when adding new alarms, and 0 when killing zombies at upon termination*/
 void killLoop(int options){
     int kill;
             do {
@@ -51,6 +52,5 @@ int main() {
         printf("PID of current process %d\n", getpid());
     }
     
-    //sleep(10);
     return 0;
 }
