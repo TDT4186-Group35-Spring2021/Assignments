@@ -176,7 +176,7 @@ void *mymalloc(long numbytes) {
     /* add your code here! */
     
     if (numbytes < 1) {
-        printf("\n...\n");
+        printf("\nERROR! Cannot allocate less than 1 byte...\n");
         return NULL;
     }
     //Assuring space allocated is sufficient while divisible by 8. A little hairy, but nothing beats branchless programming :)
@@ -216,7 +216,8 @@ void *mymalloc(long numbytes) {
 //          Adding new block to the free llist
             add_to_free_list(new_block);
             
-            return current_block;
+//          The firstbyte of allocated memory is always stored 16 bytes behind the preceeding memory control block
+            return (void *) ((long) current_block + 16);
         }
         current_block = current_block->next;
     }
@@ -231,7 +232,8 @@ void *mymalloc(long numbytes) {
 void myfree(void *firstbyte) {
 
     /* add your code here! */
-    add_to_free_list((struct mem_control_block *) firstbyte);
+//  The memory control block preceeding firstbyte is always stored 16 bytes ahead as discussed above
+    add_to_free_list((struct mem_control_block *) ((long)(firstbyte) - 16));
 }
 
 
@@ -242,18 +244,20 @@ int main(int argc, char **argv) {
     printf("\n\nAvailable heap memory before allocation: %d\n\n", MEM_SIZE-16);
     
 //  Starting to allocate memory:
+    printf("Trying to allocate 0 bytes, this should fail...\n");
+    mymalloc(0);
     printf("\nStarting to allocate memory:\n");
     printf("Allocating first block\n");
-    void *first = mymalloc(32000);
+    char *first = mymalloc(32000);
     printf("Allocating second block\n");
-    void *second = mymalloc(16000);
+    char *second = mymalloc(16000);
     printf("Allocating third block\n");
-    void *third  = mymalloc(8000);
+    char *third  = mymalloc(8000);
     printf("Allocating fourth block\n");
-    void *fourth = mymalloc(8000);
+    char *fourth = mymalloc(8000);
 //  Have now used up 64,000 + 60 (five mem_control_blocks) = 64,060. Should fail as 64,060 + 1,600 + 12 = 65,672 > 1024 * 64 = 65,536
     printf("Allocating fifth block, this should fail...\n");
-    void *fifth = mymalloc(1600);
+    char *fifth = mymalloc(1600);
     
 //  Now trying to free up allocated memory:
     printf("\nStarting to free up memory:");
@@ -272,7 +276,7 @@ int main(int argc, char **argv) {
     printf("\n\nTrying to free the fourth allocated block of memmory locking down 8,000 bytes");
     myfree(fourth);
     printf("\nThe size of the head should now equal that of the heap as fourth was the last allocated memory-block, head size is %d\n", free_list_start->size);
-    
+ 
 //  Allocating and removing
     printf("\nAllocating and removing memory:");
     first = mymalloc(8192);
@@ -291,5 +295,5 @@ int main(int argc, char **argv) {
     printf("\nfifth address  : %p", fifth);
     myfree(third);
     myfree(fifth);
-    printf("\n\nAfter freeing third and fifth we should have two free blocks in our heap.\nfree_list head : %p\nfree list tail : %p\ntail->next : %p (should be null).\nThese addresses should match those of first and third as the head, and fifth as the tail", free_list_start, free_list_start->next, free_list_start->next->next);
+    printf("\n\nAfter freeing third and fifth we should have two free blocks in our heap.\nfree_list head : %p\nfree list tail : %p\ntail->next : %p (should be null).\nThese addresses should match those of first and third as the head, and fifth as the tail, just reduced by 16", free_list_start, free_list_start->next, free_list_start->next->next);
 }
