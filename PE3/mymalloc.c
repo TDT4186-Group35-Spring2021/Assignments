@@ -115,11 +115,12 @@ void remove_from_free_list(struct mem_control_block *block) {
 }
 
 
-void add_to_free_list(struct mem_control_block *block) {
+int add_to_free_list(struct mem_control_block *block) {
+//  returns 0 if sucessful, 1 otherwise
     
     if (!address_ok(block)) {
         printf("\n\n\nERROR! Address %p is outside the heap\n\n\n", block);
-        return;
+        return 1;
     }
     
     struct mem_control_block *current_block = free_list_start;
@@ -127,7 +128,7 @@ void add_to_free_list(struct mem_control_block *block) {
     if (current_block == NULL) {
 //      There are currently no free block, thus block must become the first element in the free list
         free_list_start = block;
-        return;
+        return 0;
     }
     
     if (heap_offset(block) < heap_offset(current_block)) {
@@ -136,7 +137,7 @@ void add_to_free_list(struct mem_control_block *block) {
             block->next = current_block;
         }
         free_list_start = block;
-        return;
+        return 0;
     }
     
     while (heap_offset(block) > heap_offset(current_block)) {
@@ -145,7 +146,7 @@ void add_to_free_list(struct mem_control_block *block) {
             if (!are_neighbors(current_block, block)) {
                 current_block->next = block;
             }
-            return;
+            return 0;
         }
         else if (heap_offset(current_block) < heap_offset(block) && heap_offset(current_block->next) > heap_offset(block)) {
             
@@ -158,11 +159,12 @@ void add_to_free_list(struct mem_control_block *block) {
             if (!are_neighbors(current_block, block)) {
                 current_block->next = block;
             }
-            return;
+            return 0;
         }
         current_block = current_block->next;
     }
     printf("\n\nERROR! Could not add block %p", block);
+    return 1;
 }
 
 
@@ -229,11 +231,17 @@ void *mymalloc(long numbytes) {
 }
 
 
-void myfree(void *firstbyte) {
+void myfree(void **firstbyte) {
 
     /* add your code here! */
 //  The memory control block preceeding firstbyte is always stored 16 bytes ahead as discussed above
-    add_to_free_list((struct mem_control_block *) ((long)(firstbyte) - 16));
+//  Need to use a pointer to a pointer as the parameter to change pointer value as parameters are passed by value, not reference.
+    int free_ok = add_to_free_list((struct mem_control_block *) ((long)(*firstbyte) - 16));
+    
+    if (free_ok == 0) {
+//      We sucesfully freed up memory, now dereferencing the pointer
+        *firstbyte = NULL;
+    }
 }
 
 
@@ -262,19 +270,20 @@ int main(int argc, char **argv) {
 //  Now trying to free up allocated memory:
     printf("\nStarting to free up memory:");
     printf("\n\nTrying to free the first allocated block of memmory locking down 32,000 bytes");
-    myfree(first);
+//  A cast to void * is not required (or so it seems), jut doing it to avoid warnings in terminal
+    myfree((void *) &first);
     printf("\nfirst should be the head of free list, head size is %d",  free_list_start->size);
         
     printf("\n\nTrying to free the second allocated block of memmory locking down 16,000 bytes");
-    myfree(second);
+    myfree((void *) &second);
     printf("\nThe size of the head should have increased by the size of second, its size is %d", free_list_start->size);
     
     printf("\n\nTrying to free the third allocated block of memmory locking down 8,000 bytes");
-    myfree(third);
+    myfree((void *) &third);
     printf("\nThe size of the head should have increased by the size of third, its size is %d", free_list_start->size);
        
     printf("\n\nTrying to free the fourth allocated block of memmory locking down 8,000 bytes");
-    myfree(fourth);
+    myfree((void *) &fourth);
     printf("\nThe size of the head should now equal that of the heap as fourth was the last allocated memory-block, head size is %d\n", free_list_start->size);
  
 //  Allocating and removing
@@ -284,7 +293,7 @@ int main(int argc, char **argv) {
     second = mymalloc(16384);
     printf("\nsecond address : %p", second);
     printf("\nHaving allocated both first and second, the head of the free list has the size of %d at address %p\n", free_list_start->size, free_list_start);
-    myfree(first);
+    myfree((void *) &first);
     printf("\nNow that first is free, it should become the head of free list %p with the size of %d, while the second element is the previous head %p\n", free_list_start, free_list_start->size, free_list_start->next);
     third  = mymalloc(4096);
     printf("\nthird address  : %p", third);
@@ -293,7 +302,15 @@ int main(int argc, char **argv) {
     printf("\nfourth address : %p", fourth);
     fifth = mymalloc(24576);
     printf("\nfifth address  : %p", fifth);
-    myfree(third);
-    myfree(fifth);
+    myfree((void *) &third);
+    myfree((void *) &fifth);
     printf("\n\nAfter freeing third and fifth we should have two free blocks in our heap.\nfree_list head : %p\nfree list tail : %p\ntail->next : %p (should be null).\nThese addresses should match those of first and third as the head, and fifth as the tail, just reduced by 16", free_list_start, free_list_start->next, free_list_start->next->next);
+    
+//  Checking the pointer values after some deallocations
+    printf("\n\nChecking the pointer values after some deallocations:\n");
+    printf("\nfirst address:  %p         (should be null)", first);
+    printf("\nsecond address: %p (should not be null)", second);
+    printf("\nthird address:  %p         (should be null)", third);
+    printf("\nfourth address: %p (should not be null)", fourth);
+    printf("\nfifth address:  %p         (should be null)", fifth);
 }
