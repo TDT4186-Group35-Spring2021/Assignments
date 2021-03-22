@@ -1,0 +1,9 @@
+/bin/echo Hei du kjører nå et test-script :)
+/bin/ls -l > test.txt
+/bin/echo Vi kan legge tekst i en fil! > tekst_i_tekst.txt
+/bin/cat < tekst_i_tekst.txt
+/bin/sort -r < test.txt
+/bin/mkdir newdir
+cd newdir
+/bin/echo Ny mappe, nye muligheter > txt_in_dir.txt
+cd ..
