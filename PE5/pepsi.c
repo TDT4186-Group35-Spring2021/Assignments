@@ -2,57 +2,51 @@
 #include <unistd.h>
 #include <stdlib.h>
 
+size_t numbytes=1, bytesread=0;
+int fd[2];
 
-
-int fd[2], numbytes = 10000;
-long bytesread = 0;
-char text[100];
-
-
-void smoking_break_over(int signum) {
-    printf("\nMessage: %s\nBytesread: %d", text, bytesread);
-    printf("\nAlarm triggered!\nnumbytes at %d\n", numbytes);
-    bytesread = 0;
-    numbytes++;
+void sigHandler(int signum) {
+    printf("\nNumbytes: %zu\nBytesread: %zu", numbytes, bytesread);
+    numbytes *= 10;
     alarm(1);
 }
 
-
-int main(int argc, char *agrv[]) {
+int main(int argv, char *argc[]) {
     
-    signal(SIGALRM, smoking_break_over);
+    char data[100];
+    signal(SIGALRM, sigHandler);
+    alarm(1);
     
-    int pepsi = pipe(fd);
-    
-    if (pepsi != 0) {
-        printf("\nItte bra %d", pepsi);
-        exit(0);
+    if(pipe(fd) == -1) {
+        perror("\nCould not create pipe");
+        return -1;
     }
     
-    printf("You have a pipe! Smoke to your hearts content");
-    fflush(stdout);
-    alarm(1);
-
-    int pid = fork();
+    pid_t pid = fork();
     
     if (pid == 0) {
-//      Closing read as it is unused by child
         close(fd[0]);
-        while (1) write(fd[1], "Some old Toby!", numbytes);
+        while (1) {
+            if ((write(fd[1], "a", numbytes)) == -1) {
+                perror("\nWrite failed");
+                return -1;
+            }
+        }
         close(fd[1]);
     }
     
     else {
-//      Closing write as it is unused by parent
         close(fd[1]);
-        while (1) bytesread += read(fd[0], text, numbytes);
+        while (1) {
+            int bytes = read(fd[0], data, numbytes);
+            if (bytes == -1) {
+                perror("\nRead failed");
+                return -1;
+            }
+            bytesread += (size_t) bytes;
+        }
         close(fd[0]);
     }
     
     return 0;
 }
-
-
-/*Answers to questions in b:
- Bandwidth was mostly around 35,000,000 bytes per second using a MacBokk Pro M1. 
- However, did see numbers up 42 million bytes the first time the program was run.*/
