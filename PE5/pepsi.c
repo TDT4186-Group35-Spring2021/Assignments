@@ -4,11 +4,15 @@
 #include <signal.h>
 #include <string.h>
 
-size_t bytesread=0, max_block=0;
+size_t bytesread=0, last=0, max_block=0;
 int fd[2];
 
 void sigHandler(int signum) {
+    last = bytesread - last;
     printf("\nBytesread: %zu", bytesread);
+    printf("\nBytes last second: %zu", last);
+    printf("\nMax block size encountered: %zu", max_block);
+    last = bytesread;
     //numbytes *= 10;
     alarm(1);
 }
@@ -50,7 +54,6 @@ int main(int argc, char *argv[]) {
             bytesread += (size_t) bytes;
             if (bytes>max_block){
                 max_block = bytes;
-                printf("\nMax_block size: %zu", max_block);
             }
         }
         close(fd[0]);
