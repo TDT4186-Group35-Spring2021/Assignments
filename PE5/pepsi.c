@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
     
     
     if (pid == 0) {
-        //close(fd[0]);
+        close(fd[0]);
         while (1) {
             if ((write(fd[1], "a", numbytes)) == -1) {
                 perror("\nWrite failed");
@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     }
     
     else {
-        //close(fd[1]);
+        close(fd[1]);
         
         while (1) {
             int bytes = read(fd[0], data, numbytes);
