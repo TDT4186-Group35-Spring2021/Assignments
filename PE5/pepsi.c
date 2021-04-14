@@ -3,11 +3,12 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/types.h>
 
 size_t bytesread=0, last=0, max_block=0;
 int fd[2];
 
-void sigHandler(int signum) {
+void alarmHandler(int signum) {
     last = bytesread - last;
     printf("\nBytesread: %zu", bytesread);
     printf("\nBytes last second: %zu", last);
@@ -17,12 +18,18 @@ void sigHandler(int signum) {
     alarm(1);
 }
 
+void killHandler(int signum) {
+    printf("\n!!!!!!!!!!!!!!!!\nKILL ALARM Bytesread: %zu\n!!!!!!!!!!!!!!!!", bytesread);
+}
+
 int main(int argc, char *argv[]) {
     
     size_t numbytes = atoi(argv[1]);
     printf("Number of bytes: %zu", numbytes);
+    printf("\nParent id: %d", getpid());
     char data[100];
-    signal(SIGALRM, sigHandler);
+    signal(SIGALRM, alarmHandler);
+    signal(SIGUSR1, killHandler);
     alarm(1);
     
     if(pipe(fd) == -1) {
@@ -31,6 +38,7 @@ int main(int argc, char *argv[]) {
     }
     
     pid_t pid = fork();
+    
     
     if (pid == 0) {
         //close(fd[0]);
@@ -45,6 +53,7 @@ int main(int argc, char *argv[]) {
     
     else {
         //close(fd[1]);
+        
         while (1) {
             int bytes = read(fd[0], data, numbytes);
             if (bytes == -1) {
@@ -52,6 +61,8 @@ int main(int argc, char *argv[]) {
                 return -1;
             }
             bytesread += (size_t) bytes;
+            //Uncomment for task a
+            //printf("\nBytesread: %zu", bytesread);
             if (bytes>max_block){
                 max_block = bytes;
             }
@@ -61,3 +72,10 @@ int main(int argc, char *argv[]) {
     
     return 0;
 }
+
+
+/*Questions from b (MacBook Pro M1):
+1. ≈ 1,000 bytes per block.
+2. ≈ 2.3 GB at a 1,000 bytes per block
+3. ≈ 1.8 GB with two simultaniously running processes with block sizes of a 1,000 bytes
+ */
